@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #EAFBFF; --bg-a: #C7F5FF; --bg-b: #FFF6A8; --bg-c: #E4DEFF;
+    --surface: rgba(255,255,255,0.85); --surface-solid: rgba(255,255,255,0.97);
+    --ink: #0E3A46; --muted: #4F8892; --border: #D6F3FA;
+    --accent: #FFE600; --accent-dark: #E0A900; --accent-soft: rgba(255,230,0,0.20);
+    --good: #00BFA0; --good-soft: rgba(0,191,160,0.16); --bad: #6C63FF; --bad-soft: rgba(108,99,255,0.16);
+    --shadow: 0 10px 28px rgba(6,110,140,0.14);
+    --shadow-sm: 0 4px 14px rgba(6,110,140,0.12);
+    --cat-work: #FFD400; --cat-work-soft: rgba(255,212,0,0.18);
+    --cat-study: #00C2B2; --cat-study-soft: rgba(0,194,178,0.16);
+    --cat-life: #9B8AFB; --cat-life-soft: rgba(155,138,251,0.18);
+    --cat-rest: #29ABFF; --cat-rest-soft: rgba(41,171,255,0.16);
+    --cat-etc: #6FE0A0; --cat-etc-soft: rgba(111,224,160,0.18);
+  }
+  *{ box-sizing: border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0; min-height: 100vh; color: var(--ink); font-family: 'Zen Kaku Gothic New', sans-serif;
+    background:
+      radial-gradient(circle at 12% 6%, rgba(255,230,0,0.55) 0, transparent 26%),
+      radial-gradient(circle at 96% 10%, rgba(41,171,255,0.45) 0, transparent 30%),
+      radial-gradient(circle at 100% 65%, rgba(155,138,251,0.28) 0, transparent 34%),
+      radial-gradient(circle at -6% 60%, rgba(0,191,160,0.30) 0, transparent 32%),
+      radial-gradient(circle at 30% 92%, rgba(255,230,0,0.30) 0, transparent 30%),
+      radial-gradient(rgba(255,255,255,0.9) 1px, transparent 1.6px),
+      linear-gradient(165deg, var(--bg-a) 0%, #EAFBFF 30%, var(--bg-b) 68%, var(--bg-c) 100%);
+    background-size: auto, auto, auto, auto, auto, 26px 26px, auto;
+    background-attachment: fixed, fixed, fixed, fixed, fixed, fixed, fixed;
+  }
+  .deco-wave{
+    position: fixed; top: 0; left: 0; width: 100%; height: 90px;
+    pointer-events: none; z-index: -1; opacity: 0.55;
+  }
+  .deco-float{
+    position: fixed; font-size: 26px; opacity: 0.35; pointer-events: none; z-index: -1;
+    filter: drop-shadow(0 4px 6px rgba(6,110,140,0.15));
+  }
+  .app-header{
+    padding: 24px 18px 10px; max-width: 620px; margin: 0 auto;
+    position: relative;
+  }
+  .eyebrow{ font-family: 'Shippori Mincho', serif; font-style: italic; font-size: 11px; letter-spacing: 0.18em; color: var(--accent-dark); margin: 0 0 4px; }
+  .app-header h1{
+    font-family: 'Shippori Mincho', serif; font-weight: 700; font-size: 24px; margin: 0;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .app-header::after{ content: none; }
+
+  .tab-bar{
+    display:flex; gap: 6px; max-width: 620px; margin: 12px auto 0; padding: 0 18px 12px;
+    overflow-x: auto; scrollbar-width: none; position: sticky; top: 0; background: var(--bg); z-index: 20;
+  }
+  .tab-bar::-webkit-scrollbar{ display:none; }
+  .tab-btn{
+    flex: 0 0 auto; padding: 10px 14px; border-radius: 999px; border: none;
+    background: var(--surface); box-shadow: var(--shadow-sm); font-size: 12.5px; font-weight: 700; color: var(--muted);
+    cursor: pointer; white-space: nowrap; font-family: inherit;
+  }
+  .tab-btn.active{ background: var(--ink); border-color: var(--ink); color: #fff; }
+
+  .view{ display:none; max-width: 620px; margin: 0 auto; padding: 10px 18px 90px; }
+  .view.active{ display:block; }
+  .lede{ font-size: 12.5px; color: var(--muted); margin: 0 0 16px; line-height: 1.6; }
+
+  /* shared card / control styles */
+  .day-tabs{ display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 18px; scrollbar-width: none; }
+  .day-tabs::-webkit-scrollbar{ display:none; }
+  .day-tab{ flex: 0 0 auto; padding: 10px 16px; border-radius: 999px; border: none; background: var(--surface); box-shadow: var(--shadow-sm); font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; white-space: nowrap; }
+  .day-tab .en{ display:block; font-family: 'Shippori Mincho', serif; font-style: italic; font-size: 10px; opacity: .7; }
+  .day-tab.active{ background: var(--ink); border-color: var(--ink); color: #fff; }
+  .day-tab.active .en{ color: var(--accent); opacity: 1; }
+
+  .toolbar{ display:flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .day-heading{ font-family: 'Shippori Mincho', serif; font-size: 19px; font-weight: 700; }
+  .mini-btn{ font-size: 12px; color: var(--accent-dark); background: var(--accent-soft); border: none; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-weight: 500; }
+  .mini-btn:hover{ background: #f5dda0; }
+
+  .timeline{ position: relative; padding-left: 18px; margin-bottom: 20px; min-height: 40px; }
+  .timeline::before{ content:""; position: absolute; left: 4px; top: 6px; bottom: 6px; width: 2px; background: linear-gradient(to bottom, var(--accent), var(--border)); border-radius: 2px; }
+  .empty-note{ color: var(--muted); font-size: 13px; padding: 18px 4px; text-align: center; }
+
+  .block{ position: relative; background: var(--surface); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: none; border-radius: 16px; padding: 12px 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-sm); }
+  .block::before{ content:""; position: absolute; left: -18px; top: 50%; transform: translateY(-50%); width: 9px; height: 9px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+  .block .cat-chip{ flex: 0 0 auto; width: 6px; align-self: stretch; border-radius: 4px; }
+  .block .info{ flex: 1; min-width: 0; }
+  .block .time{ font-size: 12px; color: var(--muted); font-weight: 500; margin-bottom: 2px; }
+  .block .label{ font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .block .tag{ display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 999px; margin-top: 4px; font-weight: 500; }
+  .block .actions{ display: flex; gap: 6px; flex: 0 0 auto; }
+  .icon-btn{ width: 28px; height: 28px; border-radius: 8px; border: none; background: var(--bg); color: var(--muted); cursor: pointer; display: flex; align-items:center; justify-content:center; font-size: 14px; }
+  .icon-btn:hover{ background: var(--border); color: var(--ink); }
+
+  .add-fab{ display: block; width: 100%; padding: 14px; border-radius: 16px; border: 1.5px dashed var(--accent); background: transparent; color: var(--accent-dark); font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .add-fab:hover{ background: var(--accent-soft); }
+  .add-fab-row{ display:flex; gap: 8px; }
+  .add-fab-row .add-fab{ flex: 1; font-size: 12.5px; padding: 13px 8px; }
+
+  .overlay{ position: fixed; inset: 0; background: rgba(43,38,32,0.35); display: flex; align-items: flex-end; justify-content: center; z-index: 50; }
+  .sheet{ background: var(--surface); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); width: 100%; max-width: 620px; border-radius: 22px 22px 0 0; padding: 22px 20px 28px; max-height: 85vh; overflow-y: auto; animation: slideup .18s ease; }
+  @keyframes slideup{ from{ transform: translateY(30px); opacity:0;} to{ transform:none; opacity:1;} }
+  .sheet h2{ font-family: 'Shippori Mincho', serif; font-size: 19px; margin: 0 0 4px; }
+  .sheet .sheet-sub{ font-size: 12px; color: var(--muted); margin: 0 0 16px; }
+  .field{ margin-bottom: 14px; }
+  .field label{ display:block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+  .field input[type=text], .field select, .field input[type=time], .field input[type=date]{ width: 100%; padding: 11px 12px; border-radius: 10px; border: none; background: var(--bg); font-size: 14px; font-family: inherit; color: var(--ink); }
+  .row-2{ display: flex; gap: 10px; }
+  .row-2 .field{ flex: 1; }
+  .cat-picker{ display: flex; flex-wrap: wrap; gap: 8px; }
+  .cat-opt{ padding: 8px 12px; border-radius: 999px; font-size: 12px; font-weight: 500; border: 1.5px solid transparent; cursor: pointer; }
+  .cat-opt.selected{ border-color: currentColor; }
+  .sheet-actions{ display: flex; gap: 10px; margin-top: 18px; }
+  .btn{ flex: 1; padding: 13px; border-radius: 12px; border: none; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .btn.primary{ background: var(--ink); color: #fff; }
+  .btn.ghost{ background: var(--bg); color: var(--muted); }
+  .btn.danger{ background: var(--bad-soft); color: var(--bad); }
+  .btn.warn{ background: var(--accent-soft); color: var(--accent-dark); }
+
+  /* daily grid */
+  .date-nav{ display:flex; align-items:center; gap: 10px; background: var(--surface); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: none; box-shadow: var(--shadow-sm); border-radius: 16px; padding: 12px 14px; margin-bottom: 14px; }
+  .nav-btn{ width: 34px; height: 34px; border-radius: 10px; border: none; background: var(--bg); color: var(--ink); font-size: 16px; cursor: pointer; }
+  .nav-btn:hover{ background: var(--border); }
+  .date-center{ flex: 1; text-align: center; }
+  .date-main{ font-family: 'Shippori Mincho', serif; font-weight: 700; font-size: 16px; }
+  .date-sub{ font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .stats{ display:flex; gap: 10px; margin-bottom: 16px; }
+  .stat-card{ flex:1; background: var(--surface); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: none; box-shadow: var(--shadow-sm); border-radius: 14px; padding: 10px 12px; text-align: center; }
+  .stat-num{ font-family: 'Shippori Mincho', serif; font-size: 19px; font-weight: 700; color: var(--accent-dark); }
+  .stat-label{ font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .legend{ display:flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .legend-item{ font-size: 10px; padding: 4px 9px; border-radius: 999px; font-weight: 500; }
+  .grid-container{ position: relative; background: var(--surface); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: none; box-shadow: var(--shadow); border-radius: 18px; overflow-y: auto; max-height: 500px; padding: 8px 0; margin-bottom: 14px; }
+  .grid-inner{ position: relative; margin-left: 52px; }
+  .hour-row{ position: relative; height: 52px; border-top: 1px solid var(--border); }
+  .hour-row:first-child{ border-top: none; }
+  .hour-label{ position: absolute; left: -52px; top: -7px; width: 44px; text-align: right; font-size: 10px; color: var(--muted); font-weight: 500; }
+  .now-line{ position: absolute; left: 0; right: 0; height: 0; border-top: 2px solid var(--bad); z-index: 5; }
+  .now-line::before{ content:""; position: absolute; left: -6px; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
+  .event-block{ position: absolute; left: 6px; right: 6px; border-radius: 10px; padding: 5px 9px; font-size: 11.5px; line-height: 1.35; overflow: hidden; cursor: pointer; border-left: 4px solid transparent; }
+  .event-block .t{ font-size: 9.5px; opacity: .75; font-weight: 500; }
+  .event-block .l{ font-weight: 700; }
+  .event-block.hidden-block{ opacity: .35; text-decoration: line-through; }
+  .source-tag{ display:inline-block; font-size: 9px; padding: 1px 6px; border-radius: 999px; background: rgba(255,255,255,0.65); margin-left: 4px; font-weight: 700; }
+
+  /* habit table */
+  .table-scroll{ background: var(--surface); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: none; box-shadow: var(--shadow); border-radius: 18px; overflow-x: auto; overflow-y: hidden; margin-bottom: 16px; }
+  table{ border-collapse: collapse; }
+  thead th{ position: sticky; top: 0; background: var(--surface); z-index: 2; font-weight: 500; font-size: 10px; color: var(--muted); padding: 6px 3px; text-align: center; min-width: 26px; }
+  th.today-col, td.today-col{ background: var(--accent-soft) !important; }
+  th.weekend-col{ color: #C97B72; }
+  thead th:first-child, tbody td:first-child{ position: sticky; left: 0; background: var(--surface); z-index: 3; text-align: left; min-width: 128px; max-width: 128px; padding: 8px 10px; box-shadow: 2px 0 6px rgba(14,74,68,0.05); }
+  tbody tr:nth-child(odd) td{ background: #FDFBF5; }
+  tbody tr:nth-child(odd) td:first-child{ background: #FDFBF5; }
+  tbody td{ padding: 3px; text-align: center; }
+  .habit-name{ display:flex; align-items:center; gap: 6px; }
+  .cat-dot{ width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+  .habit-label{ font-size: 12.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 84px; }
+  .habit-rate{ font-size: 9px; color: var(--muted); margin-left: auto; flex: 0 0 auto; }
+  .cell{ width: 22px; height: 22px; margin: 0 auto; border-radius: 6px; border: none; cursor: pointer; background: var(--bg); }
+  .cell.done{ box-shadow: var(--shadow-sm); }
+  .cell.future{ opacity: .3; cursor: default; }
+  .row-edit-btn{ width: 20px; height: 20px; border-radius: 6px; border: none; background: var(--bg); color: var(--muted); font-size: 11px; cursor: pointer; flex: 0 0 auto; }
+  .suggest-item{ display:flex; align-items:center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; }
+  .suggest-item span{ font-size: 13px; font-weight: 500; }
+  .suggest-item button{ font-size: 12px; padding: 6px 12px; border-radius: 8px; border: none; background: var(--accent-soft); color: var(--accent-dark); font-weight: 700; cursor: pointer; }
+  .suggest-empty{ font-size: 12px; color: var(--muted); text-align:center; padding: 20px 0; }
+
+  /* long term */
+  .quick-row{ display:flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .quick-chip{ font-size: 11.5px; padding: 9px 14px; border-radius: 999px; border: 1.5px dashed var(--accent); background: transparent; color: var(--accent-dark); font-weight: 700; cursor: pointer; font-family: inherit; }
+  .quick-chip:hover{ background: var(--accent-soft); }
+  .section-title{ font-family: 'Shippori Mincho', serif; font-size: 15px; font-weight: 700; margin: 20px 0 10px; display:flex; align-items:center; gap: 8px; }
+  .section-title .en{ font-size: 10px; color: var(--muted); font-style: italic; font-family: 'Shippori Mincho', serif; }
+  .gantt-card{ background: var(--surface); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: none; box-shadow: var(--shadow); border-radius: 18px; padding: 16px 14px 12px; margin-bottom: 20px; overflow-x: auto; }
+  .gantt-scale{ position: relative; height: 18px; margin-left: 92px; margin-bottom: 6px; font-size: 9px; color: var(--muted); min-width: 300px; }
+  .gantt-scale span{ position: absolute; transform: translateX(-50%); }
+  .gantt-row{ display:flex; align-items:center; gap: 8px; margin-bottom: 10px; min-width: 380px; }
+  .gantt-label{ width: 84px; flex: 0 0 auto; font-size: 11px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gantt-track{ position: relative; flex: 1; height: 22px; background: var(--bg); border-radius: 8px; border: none; }
+  .gantt-bar{ position: absolute; top: 0; bottom: 0; border-radius: 7px; background: var(--border); overflow: hidden; }
+  .gantt-fill{ position:absolute; top:0; bottom:0; left:0; border-radius: 7px 0 0 7px; }
+  .gantt-today-line{ position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--bad); z-index: 3; }
+  .gantt-today-line::after{ content: "今日"; position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 8px; color: var(--bad); white-space: nowrap; font-weight: 700; }
+  .gantt-legend{ display:flex; gap: 14px; margin-top: 10px; font-size: 10px; color: var(--muted); flex-wrap: wrap; }
+  .gantt-legend span{ display:flex; align-items:center; gap: 4px; }
+  .legend-swatch{ width: 10px; height: 10px; border-radius: 3px; display:inline-block; }
+  .task-card{ background: var(--surface); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: none; box-shadow: var(--shadow); border-radius: 18px; padding: 16px; margin-bottom: 14px; }
+  .task-head{ display:flex; justify-content: space-between; align-items:flex-start; gap: 10px; }
+  .task-title{ font-family: 'Shippori Mincho', serif; font-size: 16px; font-weight: 700; }
+  .task-meta{ font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .task-menu-btn{ background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer; padding: 2px 6px; }
+  .progress-wrap{ display:flex; align-items:center; gap: 10px; margin: 12px 0; }
+  .progress-bar-outer{ flex:1; height: 10px; background: var(--bg); border-radius: 999px; overflow: hidden; border: none; }
+  .progress-bar-inner{ height: 100%; border-radius: 999px; }
+  .progress-text{ font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .pace-badge{ display: inline-flex; align-items:center; gap: 6px; padding: 8px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
+  .pace-badge.good{ background: var(--good-soft); color: var(--good); }
+  .pace-badge.bad{ background: var(--bad-soft); color: var(--bad); }
+  .pace-badge.neutral{ background: var(--cat-etc-soft); color: var(--muted); }
+  .subtask-list{ margin-bottom: 10px; }
+  .subtask-row{ display:flex; align-items:center; gap: 10px; padding: 8px 0; }
+  .subtask-check{ width: 20px; height: 20px; border-radius: 6px; border: none; background: var(--bg); cursor: pointer; flex: 0 0 auto; display:flex; align-items:center; justify-content:center; font-size: 12px; color: #fff; }
+  .subtask-label{ flex: 1; font-size: 13px; }
+  .subtask-label.done{ text-decoration: line-through; color: var(--muted); }
+  .subtask-del{ background:none; border:none; color: var(--muted); font-size: 12px; cursor: pointer; }
+  .add-subtask-row{ display:flex; gap: 8px; margin-top: 8px; }
+  .add-subtask-row input{ flex: 1; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); font-size: 13px; font-family: inherit; color: var(--ink); }
+  .add-subtask-row button{ padding: 9px 14px; border-radius: 10px; border: none; background: var(--ink); color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; }
+
+  .save-toast{
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff; font-size: 12px; padding: 8px 16px;
+    border-radius: 999px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 60;
+  }
+  .save-toast.show{ opacity: 1; }
+</style>
+</head>
+<body>
+
+<svg class="deco-wave" viewBox="0 0 1440 100" preserveAspectRatio="none">
+  <path d="M0,40 C 240,90 480,0 720,40 C 960,80 1200,10 1440,45 L1440,0 L0,0 Z" fill="#29ABFF" opacity="0.18"/>
+  <path d="M0,55 C 240,20 480,95 720,55 C 960,25 1200,90 1440,60 L1440,0 L0,0 Z" fill="#FFE600" opacity="0.14"/>
+</svg>
+
+<div class="app-header">
+  <p class="eyebrow">Daily OS</p>
+  <h1>じぶん運用OS</h1>
+</div>
+
+<nav class="tab-bar" id="tabBar">
+  <button class="tab-btn" data-view="daily">今日の時間割</button>
+  <button class="tab-btn" data-view="routine">週間ルーティン</button>
+  <button class="tab-btn" data-view="habit">達成トラッカー</button>
+  <button class="tab-btn" data-view="long">長期タスク</button>
+</nav>
+
+<!-- ============ DAILY VIEW ============ -->
+<section class="view" id="view-daily">
+  <p class="lede">週間ルーティンをベースに、その日だけの予定を追加したり非表示にできます。</p>
+  <div class="date-nav">
+    <button class="nav-btn" id="d_prevBtn">‹</button>
+    <div class="date-center"><div class="date-main" id="d_dateMain"></div><div class="date-sub" id="d_dateSub"></div></div>
+    <button class="nav-btn" id="d_nextBtn">›</button>
+    <button class="mini-btn" id="d_todayBtn">今日</button>
+  </div>
+  <div class="stats">
+    <div class="stat-card"><div class="stat-num" id="d_statCount">0</div><div class="stat-label">件の予定</div></div>
+    <div class="stat-card"><div class="stat-num" id="d_statHours">0.0</div><div class="stat-label">合計時間(h)</div></div>
+    <div class="stat-card"><div class="stat-num" id="d_statExtra">0</div><div class="stat-label">追加した予定</div></div>
+  </div>
+  <div class="legend" id="d_legend"></div>
+  <div class="grid-container" id="d_gridContainer"><div class="grid-inner" id="d_gridInner"></div></div>
+  <button class="add-fab" id="d_addBtn">＋ 今日だけの予定を追加</button>
+</section>
+
+<!-- ============ ROUTINE VIEW ============ -->
+<section class="view" id="view-routine">
+  <p class="lede">曜日ごとの基本の流れをここに登録します。ここが土台になり、時間割に自動反映されます。</p>
+  <nav class="day-tabs" id="r_dayTabs"></nav>
+  <div class="toolbar">
+    <div class="day-heading" id="r_dayHeading"></div>
+    <button class="mini-btn" id="r_copyBtn">平日にコピー</button>
+  </div>
+  <div class="timeline" id="r_timeline"></div>
+  <button class="add-fab" id="r_addBtn">＋ この曜日に予定を追加</button>
+</section>
+
+<!-- ============ HABIT VIEW ============ -->
+<section class="view" id="view-habit">
+  <p class="lede">タスクごとに、できた日をタップして塗りつぶします。</p>
+  <div class="date-nav">
+    <button class="nav-btn" id="h_prevBtn">‹</button>
+    <div class="date-center"><div class="date-main" id="h_monthMain"></div><div class="date-sub" id="h_monthSub"></div></div>
+    <button class="nav-btn" id="h_nextBtn">›</button>
+    <button class="mini-btn" id="h_todayBtn">今月</button>
+  </div>
+  <div class="stats">
+    <div class="stat-card"><div class="stat-num" id="h_statHabits">0</div><div class="stat-label">追跡中</div></div>
+    <div class="stat-card"><div class="stat-num" id="h_statRate">0%</div><div class="stat-label">今月平均</div></div>
+    <div class="stat-card"><div class="stat-num" id="h_statStreak">0</div><div class="stat-label">最大連続</div></div>
+  </div>
+  <div class="table-scroll"><table id="h_gridTable"></table></div>
+  <div class="add-fab-row">
+    <button class="add-fab" id="h_addManualBtn">＋ タスクを追加</button>
+    <button class="add-fab" id="h_addFromRoutineBtn">ルーティンから追加</button>
+  </div>
+</section>
+
+<!-- ============ LONG-TERM VIEW ============ -->
+<section class="view" id="view-long">
+  <p class="lede">締め切りのあるタスクをサブタスク単位で管理し、今のペースでの完了予測を出します。</p>
+  <div class="quick-row" id="l_quickRow"></div>
+  <div class="stats">
+    <div class="stat-card"><div class="stat-num" id="l_statCount">0</div><div class="stat-label">管理中</div></div>
+    <div class="stat-card"><div class="stat-num" id="l_statGood">0</div><div class="stat-label">順調</div></div>
+    <div class="stat-card"><div class="stat-num" id="l_statBad">0</div><div class="stat-label">要ペースアップ</div></div>
+  </div>
+  <div class="section-title">全体ガンチャート <span class="en">Overview</span></div>
+  <div class="gantt-card" id="l_ganttCard"></div>
+  <div class="section-title">タスク詳細 <span class="en">Details</span></div>
+  <div id="l_taskList"></div>
+  <button class="add-fab" id="l_addTaskBtn">＋ 長期タスクを追加</button>
+</section>
+
+<div class="save-toast" id="saveToast">保存しました</div>
+
+<script>
+/* ========================= SHARED ========================= */
+const CATEGORIES = [
+  {key:'work',  label:'仕事・準備', color:'var(--cat-work)',  soft:'var(--cat-work-soft)'},
+  {key:'study', label:'資格勉強',   color:'var(--cat-study)', soft:'var(--cat-study-soft)'},
+  {key:'life',  label:'生活',       color:'var(--cat-life)',  soft:'var(--cat-life-soft)'},
+  {key:'rest',  label:'休息',       color:'var(--cat-rest)',  soft:'var(--cat-rest-soft)'},
+  {key:'etc',   label:'その他',     color:'var(--cat-etc)',   soft:'var(--cat-etc-soft)'},
+];
+const catByKey = Object.fromEntries(CATEGORIES.map(c => [c.key, c]));
+let saveToastTimer = null;
+function flashSaved(){
+  const el = document.getElementById('saveToast');
+  el.classList.add('show');
+  clearTimeout(saveToastTimer);
+  saveToastTimer = setTimeout(() => el.classList.remove('show'), 1300);
+}
+function escapeHtml(s){ return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function pad(n){ return String(n).padStart(2,'0'); }
+
+/* ========================= TAB SWITCHING ========================= */
+const VIEWS = ['daily','routine','habit','long'];
+function showView(name){
+  VIEWS.forEach(v => {
+    document.getElementById('view-'+v).classList.toggle('active', v === name);
+  });
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+}
+document.getElementById('tabBar').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if(btn) showView(btn.dataset.view);
+});
+
+/* ========================= ROUTINE MODULE ========================= */
+const ROUTINE_KEY = 'routine-data';
+const R_DAYS = [
+  {key:'mon', jp:'月', en:'Mon', weekday:true}, {key:'tue', jp:'火', en:'Tue', weekday:true},
+  {key:'wed', jp:'水', en:'Wed', weekday:true}, {key:'thu', jp:'木', en:'Thu', weekday:true},
+  {key:'fri', jp:'金', en:'Fri', weekday:true}, {key:'sat', jp:'土', en:'Sat', weekday:false},
+  {key:'sun', jp:'日', en:'Sun', weekday:false},
+];
+let routineData = {};
+let r_currentDay = 'mon';
+
+async function r_load(){
+  try{ const res = await window.storage.get(ROUTINE_KEY); routineData = res && res.value ? JSON.parse(res.value) : null; }
+  catch(e){ routineData = null; }
+  if(!routineData){ routineData = {}; R_DAYS.forEach(d => routineData[d.key] = []); }
+}
+async function r_save(){
+  try{ await window.storage.set(ROUTINE_KEY, JSON.stringify(routineData)); flashSaved(); }
+  catch(e){ console.error(e); }
+}
+function r_renderTabs(){
+  const nav = document.getElementById('r_dayTabs'); nav.innerHTML = '';
+  R_DAYS.forEach(d => {
+    const btn = document.createElement('button');
+    btn.className = 'day-tab' + (d.key === r_currentDay ? ' active' : '');
+    btn.innerHTML = `${d.jp}<span class="en">${d.en}</span>`;
+    btn.onclick = () => { r_currentDay = d.key; r_render(); };
+    nav.appendChild(btn);
+  });
+}
+function r_render(){
+  r_renderTabs();
+  document.getElementById('r_dayHeading').textContent = `${R_DAYS.find(x=>x.key===r_currentDay).jp}曜日`;
+  const list = [...(routineData[r_currentDay] || [])].sort((a,b) => a.start.localeCompare(b.start));
+  const tl = document.getElementById('r_timeline'); tl.innerHTML = '';
+  if(list.length === 0){ tl.innerHTML = '<p class="empty-note">まだ予定がありません。下のボタンから追加してください。</p>'; return; }
+  list.forEach(item => {
+    const cat = catByKey[item.category] || CATEGORIES[4];
+    const row = document.createElement('div'); row.className = 'block';
+    row.innerHTML = `
+      <div class="cat-chip" style="background:${cat.color}"></div>
+      <div class="info">
+        <div class="time">${item.start} – ${item.end}</div>
+        <div class="label">${escapeHtml(item.label)}</div>
+        <span class="tag" style="background:${cat.soft}; color:${cat.color}">${cat.label}</span>
+      </div>
+      <div class="actions">
+        <button class="icon-btn" data-edit="${item.id}">✎</button>
+        <button class="icon-btn" data-del="${item.id}">✕</button>
+      </div>`;
+    tl.appendChild(row);
+  });
+  tl.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => r_openSheet(b.dataset.edit));
+  tl.querySelectorAll('[data-del]').forEach(b => b.onclick = () => r_deleteItem(b.dataset.del));
+}
+function r_deleteItem(id){
+  routineData[r_currentDay] = routineData[r_currentDay].filter(x => x.id !== id);
+  r_render(); r_save();
+  d_render(); // reflect in daily view if same weekday visible
+}
+function r_openSheet(id){
+  const existing = id ? routineData[r_currentDay].find(x => x.id === id) : null;
+  const overlay = document.createElement('div'); overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <div class="sheet">
+      <h2>${existing ? '予定を編集' : '予定を追加'}</h2>
+      <div class="row-2">
+        <div class="field"><label>開始</label><input type="time" id="fStart" value="${existing ? existing.start : '09:00'}"></div>
+        <div class="field"><label>終了</label><input type="time" id="fEnd" value="${existing ? existing.end : '10:00'}"></div>
+      </div>
+      <div class="field"><label>内容</label><input type="text" id="fLabel" placeholder="例）イベント準備ミーティング" value="${existing ? escapeHtml(existing.label) : ''}"></div>
+      <div class="field"><label>カテゴリー</label><div class="cat-picker" id="catPicker"></div></div>
+      <div class="sheet-actions">
+        ${existing ? '<button class="btn danger" id="delFromSheet">削除</button>' : ''}
+        <button class="btn ghost" id="cancelBtn">キャンセル</button>
+        <button class="btn primary" id="saveBtn">保存</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  let selectedCat = existing ? existing.category : 'work';
+  const picker = overlay.querySelector('#catPicker');
+  function renderPicker(){
+    picker.innerHTML = '';
+    CATEGORIES.forEach(c => {
+      const opt = document.createElement('div');
+      opt.className = 'cat-opt' + (c.key === selectedCat ? ' selected' : '');
+      opt.style.background = c.soft; opt.style.color = c.color; opt.textContent = c.label;
+      opt.onclick = () => { selectedCat = c.key; renderPicker(); };
+      picker.appendChild(opt);
+    });
+  }
+  renderPicker();
+  overlay.querySelector('#cancelBtn').onclick = () => overlay.remove();
+  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+  const delBtn = overlay.querySelector('#delFromSheet');
+  if(delBtn) delBtn.onclick = () => { r_deleteItem(existing.id); overlay.remove(); };
+  overlay.querySelector('#saveBtn').onclick = () => {
+    const start = overlay.querySelector('#fStart').value;
+    const end = overlay.querySelector('#fEnd').value;
+    const label = overlay.querySelector('#fLabel').value.trim();
+    if(!label){ alert('内容を入力してください'); return; }
+    if(!start || !end || start >= end){ alert('開始時刻は終了時刻より前にしてください'); return; }
+    if(existing){ existing.start=start; existing.end=end; existing.label=label; existing.category=selectedCat; }
+    else { routineData[r_currentDay].push({ id:'b'+Date.now()+Math.random().toString(36).slice(2,6), start,end,label,category:selectedCat }); }
+    overlay.remove(); r_render(); r_save(); d_render();
+  };
+}
+document.getElementById('r_addBtn').onclick = () => r_openSheet(null);
+document.getElementById('r_copyBtn').onclick = () => {
+  if(!confirm('この曜日の予定を月〜金の他の平日にコピーします。よろしいですか？')) return;
+  const source = routineData[r_currentDay].map(item => ({...item}));
+  R_DAYS.filter(d => d.weekday && d.key !== r_currentDay).forEach(d => {
+    routineData[d.key] = source.map(item => ({...item, id:'b'+Date.now()+Math.random().toString(36).slice(2,6)}));
+  });
+  r_render(); r_save(); d_render();
+};
+
+/* ========================= DAILY MODULE ========================= */
+const DAY_KEYS = ['sun','mon','tue','wed','thu','fri','sat'];
+const DAY_JP = ['日','月','火','水','木','金','土'];
+const GRID_START_HOUR = 5, GRID_END_HOUR = 26, ROW_HEIGHT = 52;
+let d_currentDate = new Date();
+let d_overrides = {hidden:[], extra:[]};
+
+function dateKey(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function routineDayKey(d){ return DAY_KEYS[d.getDay()]; }
+function isSameDate(a,b){ return dateKey(a) === dateKey(b); }
+function timeToMin(t){ const [h,m] = t.split(':').map(Number); return h*60+m; }
+
+async function d_loadOverrides(){
+  const key = 'daily-overrides:' + dateKey(d_currentDate);
+  try{ const res = await window.storage.get(key); d_overrides = res && res.value ? JSON.parse(res.value) : {hidden:[],extra:[]}; }
+  catch(e){ d_overrides = {hidden:[],extra:[]}; }
+}
+async function d_saveOverrides(){
+  const key = 'daily-overrides:' + dateKey(d_currentDate);
+  try{ await window.storage.set(key, JSON.stringify(d_overrides)); flashSaved(); } catch(e){ console.error(e); }
+}
+function d_getMergedItems(){
+  const wKey = routineDayKey(d_currentDate);
+  const base = (routineData[wKey] || []).map(item => ({...item, source:'base'}));
+  const extra = (d_overrides.extra || []).map(item => ({...item, source:'extra'}));
+  return [...base, ...extra];
+}
+function d_render(){
+  const jp = DAY_JP[d_currentDate.getDay()];
+  document.getElementById('d_dateMain').textContent = `${d_currentDate.getFullYear()}年${d_currentDate.getMonth()+1}月${d_currentDate.getDate()}日（${jp}）`;
+  document.getElementById('d_dateSub').textContent = isSameDate(d_currentDate, new Date()) ? '今日' : '';
+
+  const items = d_getMergedItems().sort((a,b) => a.start.localeCompare(b.start));
+  const visible = items.filter(it => !d_overrides.hidden.includes(it.id));
+  const totalMin = visible.reduce((sum,it) => sum + (timeToMin(it.end)-timeToMin(it.start)), 0);
+  document.getElementById('d_statCount').textContent = visible.length;
+  document.getElementById('d_statHours').textContent = (totalMin/60).toFixed(1);
+  document.getElementById('d_statExtra').textContent = (d_overrides.extra||[]).length;
+
+  document.getElementById('d_legend').innerHTML = CATEGORIES.map(c =>
+    `<span class="legend-item" style="background:${c.soft};color:${c.color}">${c.label}</span>`).join('');
+
+  const inner = document.getElementById('d_gridInner'); inner.innerHTML = '';
+  const totalHours = GRID_END_HOUR - GRID_START_HOUR;
+  for(let h=GRID_START_HOUR; h<GRID_END_HOUR; h++){
+    const row = document.createElement('div'); row.className = 'hour-row';
+    row.innerHTML = `<span class="hour-label">${h%24}:00</span>`;
+    inner.appendChild(row);
+  }
+  inner.style.height = (totalHours*ROW_HEIGHT)+'px';
+  const gridStartMin = GRID_START_HOUR*60;
+  items.forEach(item => {
+    let startMin = timeToMin(item.start), endMin = timeToMin(item.end);
+    if(startMin < gridStartMin) startMin += 24*60;
+    if(endMin <= startMin) endMin += 24*60;
+    const top = ((startMin-gridStartMin)/60)*ROW_HEIGHT;
+    const height = Math.max(((endMin-startMin)/60)*ROW_HEIGHT - 4, 22);
+    const cat = catByKey[item.category] || CATEGORIES[4];
+    const isHidden = d_overrides.hidden.includes(item.id);
+    const el = document.createElement('div');
+    el.className = 'event-block' + (isHidden ? ' hidden-block' : '');
+    el.style.top = top+'px'; el.style.height = height+'px';
+    el.style.background = cat.soft; el.style.color = cat.color; el.style.borderLeftColor = cat.color;
+    el.innerHTML = `<div class="t">${item.start}–${item.end}${item.source==='extra' ? ' <span class="source-tag">追加</span>' : ''}</div><div class="l">${escapeHtml(item.label)}</div>`;
+    el.onclick = () => d_openItemSheet(item, isHidden);
+    inner.appendChild(el);
+  });
+  const existingLine = document.getElementById('nowLine'); if(existingLine) existingLine.remove();
+  const now = new Date();
+  if(isSameDate(now, d_currentDate)){
+    let nowMin = now.getHours()*60+now.getMinutes();
+    if(nowMin >= gridStartMin){
+      const top = ((nowMin-gridStartMin)/60)*ROW_HEIGHT;
+      if(top <= totalHours*ROW_HEIGHT){
+        const line = document.createElement('div'); line.id='nowLine'; line.className='now-line'; line.style.top = top+'px';
+        inner.appendChild(line);
+      }
+    }
+  }
+}
+function d_openItemSheet(item, isHidden){ item.source==='base' ? d_openBaseSheet(item, isHidden) : d_openExtraSheet(item); }
+function d_openBaseSheet(item, isHidden){
+  const cat = catByKey[item.category] || CATEGORIES[4];
+  const overlay = document.createElement('div'); overlay.className='overlay';
+  overlay.innerHTML = `
+    <div class="sheet">
+      <h2>${escapeHtml(item.label)}</h2>
+      <p class="sheet-sub">${item.start}–${item.end} ・ ${cat.label} ・ ルーティン予定（週間ルーティンタブで編集できます）</p>
+      <div class="sheet-actions">
+        <button class="btn ghost" id="closeBtn">閉じる</button>
+        <button class="btn warn" id="toggleHideBtn">${isHidden ? '今日は実行する' : '今日は非表示にする'}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+  overlay.querySelector('#closeBtn').onclick = () => overlay.remove();
+  overlay.querySelector('#toggleHideBtn').onclick = () => {
+    if(isHidden) d_overrides.hidden = d_overrides.hidden.filter(id => id !== item.id);
+    else d_overrides.hidden.push(item.id);
+    overlay.remove(); d_render(); d_saveOverrides();
+  };
+}
+function d_openExtraSheet(existing){
+  const overlay = document.createElement('div'); overlay.className='overlay';
+  overlay.innerHTML = `
+    <div class="sheet">
+      <h2>${existing ? '予定を編集' : '今日だけの予定を追加'}</h2>
+      <p class="sheet-sub">この日にだけ追加される予定です。週間ルーティンには影響しません。</p>
+      <div class="row-2">
+        <div class="field"><label>開始</label><input type="time" id="fStart" value="${existing?existing.start:'19:00'}"></div>
+        <div class="field"><label>終了</label><input type="time" id="fEnd" value="${existing?existing.end:'20:00'}"></div>
+      </div>
+      <div class="field"><label>内容</label><input type="text" id="fLabel" placeholder="例）会場の下見" value="${existing?escapeHtml(existing.label):''}"></div>
+      <div class="field"><label>カテゴリー</label><div class="cat-picker" id="catPicker"></div></div>
+      <div class="sheet-actions">
+        ${existing ? '<button class="btn danger" id="delBtn">削除</button>' : ''}
+        <button class="btn ghost" id="cancelBtn">キャンセル</button>
+        <button class="btn primary" id="saveBtn">保存</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  let selectedCat = existing ? existing.category : 'work';
+  const picker = overlay.querySelector('#catPicker');
+  function renderPicker(){
+    picker.innerHTML = '';
+    CATEGORIES.forEach(c => {
+      const opt = document.createElement('div');
+      opt.className = 'cat-opt' + (c.key===selectedCat?' selected':'');
+      opt.style.background=c.soft; opt.style.color=c.color; opt.textContent=c.label;
+      opt.onclick = () => { selectedCat = c.key; renderPicker(); };
+      picker.appendChild(opt);
+    });
+  }
+  renderPicker();
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+  overlay.querySelector('#cancelBtn').onclick = () => overlay.remove();
+  const delBtn = overlay.querySelector('#delBtn');
+  if(delBtn) delBtn.onclick = () => { d_overrides.extra = d_overrides.extra.filter(x=>x.id!==existing.id); overlay.remove(); d_render(); d_saveOverrides(); };
+  overlay.querySelector('#saveBtn').onclick = () => {
+    const start = overlay.querySelector('#fStart').value, end = overlay.querySelector('#fEnd').value;
+    const label = overlay.querySelector('#fLabel').value.trim();
+    if(!label){ alert('内容を入力してください'); return; }
+    if(!start||!end||start===end){ alert('開始・終了時刻を確認してください'); return; }
+    if(existing){ existing.start=start; existing.end=end; existing.label=label; existing.category=selectedCat; }
+    else{
+      d_overrides.extra = d_overrides.extra || [];
+      d_overrides.extra.push({ id:'e'+Date.now()+Math.random().toString(36).slice(2,6), start,end,label,category:selectedCat });
+    }
+    overlay.remove(); d_render(); d_saveOverrides();
+  };
+}
+document.getElementById('d_addBtn').onclick = () => d_openExtraSheet(null);
+document.getElementById('d_prevBtn').onclick = async () => { d_currentDate.setDate(d_currentDate.getDate()-1); await d_loadOverrides(); d_render(); };
+document.getElementById('d_nextBtn').onclick = async () => { d_currentDate.setDate(d_currentDate.getDate()+1); await d_loadOverrides(); d_render(); };
+document.getElementById('d_todayBtn').onclick = async () => { d_currentDate = new Date(); await d_loadOverrides(); d_render(); };
+
+/* ========================= HABIT MODULE ========================= */
+const HABITS_KEY = 'habits-list';
+const WEEKDAY_JP = ['日','月','火','水','木','金','土'];
+let habits = [];
+let h_currentMonth = new Date(); h_currentMonth.setDate(1);
+let completions = {};
+
+function monthKey(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}`; }
+function daysInMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(); }
+async function h_loadHabits(){
+  try{ const res = await window.storage.get(HABITS_KEY); habits = res && res.value ? JSON.parse(res.value) : []; }
+  catch(e){ habits = []; }
+}
+async function h_saveHabits(){ try{ await window.storage.set(HABITS_KEY, JSON.stringify(habits)); flashSaved(); } catch(e){ console.error(e); } }
+async function h_loadCompletions(){
+  const key = 'completions:' + monthKey(h_currentMonth);
+  try{ const res = await window.storage.get(key); completions = res && res.value ? JSON.parse(res.value) : {}; }
+  catch(e){ completions = {}; }
+}
+async function h_saveCompletions(){
+  const key = 'completions:' + monthKey(h_currentMonth);
+  try{ await window.storage.set(key, JSON.stringify(completions)); flashSaved(); } catch(e){ console.error(e); }
+}
+function h_elapsedDays(){
+  const now = new Date();
+  if(monthKey(h_currentMonth) !== monthKey(now)) return h_currentMonth < now ? daysInMonth(h_currentMonth) : 0;
+  return now.getDate();
+}
+function h_render(){
+  document.getElementById('h_monthMain').textContent = `${h_currentMonth.getFullYear()}年 ${h_currentMonth.getMonth()+1}月`;
+  document.getElementById('h_monthSub').textContent = monthKey(h_currentMonth)===monthKey(new Date()) ? '今月' : '';
+  document.getElementById('h_statHabits').textContent = habits.length;
+
+  const elapsed = h_elapsedDays();
+  let totalPossible=0, totalDone=0, maxStreak=0;
+  habits.forEach(hb => {
+    const rec = completions[hb.id] || {};
+    let doneCount=0, streak=0, cur=0;
+    for(let d=1; d<=elapsed; d++){
+      if(rec[d]){ doneCount++; cur++; streak=Math.max(streak,cur); } else cur=0;
+    }
+    totalPossible += elapsed; totalDone += doneCount;
+    maxStreak = Math.max(maxStreak, streak);
+  });
+  document.getElementById('h_statRate').textContent = (totalPossible>0 ? Math.round((totalDone/totalPossible)*100) : 0) + '%';
+  document.getElementById('h_statStreak').textContent = maxStreak;
+
+  const table = document.getElementById('h_gridTable');
+  const nDays = daysInMonth(h_currentMonth);
+  const today = new Date();
+  const isCurrentMonth = monthKey(h_currentMonth)===monthKey(today);
+  const todayDate = today.getDate();
+
+  let thead = '<thead><tr><th>タスク</th>';
+  for(let d=1; d<=nDays; d++){
+    const wd = new Date(h_currentMonth.getFullYear(), h_currentMonth.getMonth(), d).getDay();
+    const isWeekend = wd===0||wd===6;
+    const isToday = isCurrentMonth && d===todayDate;
+    thead += `<th class="${isWeekend?'weekend-col':''} ${isToday?'today-col':''}">${d}<br>${WEEKDAY_JP[wd]}</th>`;
+  }
+  thead += '</tr></thead>';
+
+  let tbody = '<tbody>';
+  if(habits.length===0){
+    tbody += `<tr><td colspan="${nDays+1}" style="text-align:center;color:var(--muted);font-size:12px;padding:20px;">まだタスクがありません。</td></tr>`;
+  } else {
+    habits.forEach(hb => {
+      const cat = catByKey[hb.category] || CATEGORIES[4];
+      const rec = completions[hb.id] || {};
+      const doneCount = Object.keys(rec).filter(d => rec[d] && Number(d)<=(elapsed||nDays)).length;
+      const rate = elapsed>0 ? Math.round((doneCount/elapsed)*100) : 0;
+      tbody += `<tr><td><div class="habit-name">
+        <span class="cat-dot" style="background:${cat.color}"></span>
+        <span class="habit-label" title="${escapeHtml(hb.label)}">${escapeHtml(hb.label)}</span>
+        <span class="habit-rate">${rate}%</span>
+        <button class="row-edit-btn" data-editrow="${hb.id}">✕</button>
+      </div></td>`;
+      for(let d=1; d<=nDays; d++){
+        const isFuture = isCurrentMonth && d>todayDate;
+        const isToday = isCurrentMonth && d===todayDate;
+        const done = !!rec[d];
+        tbody += `<td class="${isToday?'today-col':''}"><div class="cell ${done?'done':''} ${isFuture?'future':''}" style="${done?`background:${cat.color};`:''}" data-habit="${hb.id}" data-day="${d}"></div></td>`;
+      }
+      tbody += '</tr>';
+    });
+  }
+  tbody += '</tbody>';
+  table.innerHTML = thead + tbody;
+
+  table.querySelectorAll('.cell:not(.future)').forEach(cell => {
+    cell.onclick = () => {
+      const hId = cell.dataset.habit, day = cell.dataset.day;
+      completions[hId] = completions[hId] || {};
+      completions[hId][day] = !completions[hId][day];
+      h_render(); h_saveCompletions();
+    };
+  });
+  table.querySelectorAll('[data-editrow]').forEach(btn => btn.onclick = () => h_confirmDelete(btn.dataset.editrow));
+}
+function h_confirmDelete(id){
+  const hb = habits.find(x=>x.id===id); if(!hb) return;
+  if(confirm(`「${hb.label}」の追跡をやめますか？（記録は保持されます）`)){
+    habits = habits.filter(x=>x.id!==id); h_render(); h_saveHabits();
+  }
+}
+function h_openAddManual(){
+  const overlay = document.createElement('div'); overlay.className='overlay';
+  overlay.innerHTML = `
+    <div class="sheet">
+      <h2>タスクを追加</h2>
+      <p class="sheet-sub">毎日できたかどうかを記録したいタスクを登録します。</p>
+      <div class="field"><label>タスク名</label><input type="text" id="fLabel" placeholder="例）筋トレ / 過去問1回分"></div>
+      <div class="field"><label>カテゴリー</label><div class="cat-picker" id="catPicker"></div></div>
+      <div class="sheet-actions">
+        <button class="btn ghost" id="cancelBtn">キャンセル</button>
+        <button class="btn primary" id="saveBtn">追加</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  let selectedCat='work';
+  const picker = overlay.querySelector('#catPicker');
+  function renderPicker(){
+    picker.innerHTML='';
+    CATEGORIES.forEach(c=>{
+      const opt=document.createElement('div');
+      opt.className='cat-opt'+(c.key===selectedCat?' selected':'');
+      opt.style.background=c.soft; opt.style.color=c.color; opt.textContent=c.label;
+      opt.onclick=()=>{ selectedCat=c.key; renderPicker(); };
+      picker.appendChild(opt);
+    });
+  }
+  renderPicker();
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+  overlay.querySelector('#cancelBtn').onclick=()=>overlay.remove();
+  overlay.querySelector('#saveBtn').onclick=()=>{
+    const label = overlay.querySelector('#fLabel').value.trim();
+    if(!label){ alert('タスク名を入力してください'); return; }
+    habits.push({ id:'h'+Date.now()+Math.random().toString(36).slice(2,6), label, category:selectedCat });
+    overlay.remove(); h_render(); h_saveHabits();
+  };
+}
+function h_openAddFromRoutine(){
+  const uniqueLabels = new Map();
+  Object.values(routineData).forEach(list => (list||[]).forEach(item => { if(!uniqueLabels.has(item.label)) uniqueLabels.set(item.label, item.category); }));
+  const existingLabels = new Set(habits.map(h=>h.label));
+  const candidates = [...uniqueLabels.entries()].filter(([label]) => !existingLabels.has(label));
+  const overlay = document.createElement('div'); overlay.className='overlay';
+  overlay.innerHTML = `
+    <div class="sheet">
+      <h2>ルーティンから追加</h2>
+      <p class="sheet-sub">週間ルーティンに登録済みの予定から選んで追跡できます。</p>
+      <div id="candidateList"></div>
+      <div class="sheet-actions"><button class="btn ghost" id="closeBtn">閉じる</button></div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const list = overlay.querySelector('#candidateList');
+  if(candidates.length===0){
+    list.innerHTML = '<p class="suggest-empty">追加できる新しい予定がありません。</p>';
+  } else {
+    candidates.forEach(([label, category]) => {
+      const row = document.createElement('div'); row.className='suggest-item';
+      row.innerHTML = `<span>${escapeHtml(label)}</span><button>追加</button>`;
+      row.querySelector('button').onclick = () => {
+        habits.push({ id:'h'+Date.now()+Math.random().toString(36).slice(2,6), label, category });
+        row.remove(); h_render(); h_saveHabits();
+      };
+      list.appendChild(row);
+    });
+  }
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+  overlay.querySelector('#closeBtn').onclick=()=>overlay.remove();
+}
+document.getElementById('h_addManualBtn').onclick = h_openAddManual;
+document.getElementById('h_addFromRoutineBtn').onclick = h_openAddFromRoutine;
+document.getElementById('h_prevBtn').onclick = async () => { h_currentMonth.setMonth(h_currentMonth.getMonth()-1); await h_loadCompletions(); h_render(); };
+document.getElementById('h_nextBtn').onclick = async () => { h_currentMonth.setMonth(h_currentMonth.getMonth()+1); await h_loadCompletions(); h_render(); };
+document.getElementById('h_todayBtn').onclick = async () => { h_currentMonth = new Date(); h_currentMonth.setDate(1); await h_loadCompletions(); h_render(); };
+
+/* ========================= LONG-TERM MODULE ========================= */
+const TASKS_KEY = 'long-term-tasks';
+let tasks = [];
+function toISO(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function fromISO(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function dayDiff(a,b){ return Math.round((b-a)/86400000); }
+function todayNorm(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
+function fmtDate(d){ return `${d.getMonth()+1}/${d.getDate()}`; }
+
+async function l_loadTasks(){
+  try{ const res = await window.storage.get(TASKS_KEY); tasks = res && res.value ? JSON.parse(res.value) : []; }
+  catch(e){ tasks = []; }
+}
+async function l_saveTasks(){ try{ await window.storage.set(TASKS_KEY, JSON.stringify(tasks)); flashSaved(); } catch(e){ console.error(e); } }
+
+function l_computePace(t){
+  const today = todayNorm(), start = fromISO(t.start), deadline = fromISO(t.deadline);
+  const total = t.subtasks.length, done = t.subtasks.filter(s=>s.done).length, remaining = total-done;
+  const elapsedDays = Math.max(dayDiff(start, today), 1);
+  const daysToDeadline = dayDiff(today, deadline);
+  let status='neutral', message='', projectedDate=null;
+  if(total===0){ message = 'サブタスクを追加すると予測を計算します'; }
+  else if(remaining===0){ status='good'; message='全サブタスク完了です！'; }
+  else {
+    const rate = done/elapsedDays;
+    if(rate<=0){ status='bad'; message = `このペースだと完了の見込みが立ちません（残り${remaining}個）`; }
+    else {
+      const daysNeeded = Math.ceil(remaining/rate);
+      projectedDate = addDays(today, daysNeeded);
+      if(daysNeeded <= daysToDeadline){ status='good'; message = `このペースならあと約${daysNeeded}日で完了見込み（締切${daysToDeadline}日前に余裕あり）`; }
+      else { status='bad'; const overBy = daysNeeded - daysToDeadline; message = `このペースだと完了まで約${daysNeeded}日かかり、締切に約${overBy}日遅れる見込みです`; }
+    }
+  }
+  return { done, total, remaining, daysToDeadline, status, message, projectedDate };
+}
+function l_render(){
+  const today = todayNorm();
+  const eventDate = addDays(today,50), examDate = addDays(today,170);
+  document.getElementById('l_quickRow').innerHTML = `
+    <button class="quick-chip" id="l_quickEvent">＋ イベント本番（${fmtDate(eventDate)} / 50日後）</button>
+    <button class="quick-chip" id="l_quickExam">＋ 資格試験（${fmtDate(examDate)} / 170日後）</button>`;
+  document.getElementById('l_quickEvent').onclick = () => l_openTaskSheet(null, {title:'イベント本番', start:toISO(today), deadline:toISO(eventDate), category:'work'});
+  document.getElementById('l_quickExam').onclick = () => l_openTaskSheet(null, {title:'資格試験', start:toISO(today), deadline:toISO(examDate), category:'study'});
+
+  document.getElementById('l_statCount').textContent = tasks.length;
+  let good=0, bad=0;
+  tasks.forEach(t => { const p=l_computePace(t); if(p.status==='good') good++; if(p.status==='bad') bad++; });
+  document.getElementById('l_statGood').textContent = good;
+  document.getElementById('l_statBad').textContent = bad;
+
+  const card = document.getElementById('l_ganttCard');
+  if(tasks.length===0){ card.innerHTML = '<p class="empty-note">タスクを追加するとここに表示されます。</p>'; }
+  else {
+    let minDate = today, maxDate = addDays(today,30);
+    tasks.forEach(t => { const s=fromISO(t.start), d=fromISO(t.deadline); if(s<minDate) minDate=s; if(d>maxDate) maxDate=d; });
+    minDate = addDays(minDate,-2); maxDate = addDays(maxDate,2);
+    const totalSpan = Math.max(dayDiff(minDate,maxDate),1);
+    let html = `<div class="gantt-scale">`;
+    for(let i=0;i<=4;i++){ const d=addDays(minDate, Math.round(totalSpan*i/4)); html += `<span style="left:${(i/4)*100}%">${fmtDate(d)}</span>`; }
+    html += `</div>`;
+    const todayPct = (dayDiff(minDate,today)/totalSpan)*100;
+    tasks.forEach(t => {
+      const cat = catByKey[t.category] || CATEGORIES[4];
+      const s=fromISO(t.start), d=fromISO(t.deadline);
+      const leftPct = (dayDiff(minDate,s)/totalSpan)*100;
+      const widthPct = Math.max((dayDiff(s,d)/totalSpan)*100, 2);
+      const p = l_computePace(t);
+      const fillPct = p.total>0 ? (p.done/p.total)*100 : 0;
+      html += `<div class="gantt-row">
+        <div class="gantt-label" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</div>
+        <div class="gantt-track">
+          <div class="gantt-bar" style="left:${leftPct}%; width:${widthPct}%; background:${cat.soft};">
+            <div class="gantt-fill" style="width:${fillPct}%; background:${cat.color};"></div>
+          </div>
+          ${todayPct>=0 && todayPct<=100 ? `<div class="gantt-today-line" style="left:${todayPct}%"></div>` : ''}
+        </div></div>`;
+    });
+    html += `<div class="gantt-legend"><span><span class="legend-swatch" style="background:var(--bad)"></span>今日</span><span><span class="legend-swatch" style="background:var(--cat-work)"></span>バーの塗り＝サブタスク完了率</span></div>`;
+    card.innerHTML = html;
+  }
+
+  const list = document.getElementById('l_taskList');
+  if(tasks.length===0){ list.innerHTML = '<p class="empty-note">まだ長期タスクがありません。</p>'; return; }
+  list.innerHTML = '';
+  tasks.forEach(t => {
+    const cat = catByKey[t.category] || CATEGORIES[4];
+    const p = l_computePace(t);
+    const fillPct = p.total>0 ? Math.round((p.done/p.total)*100) : 0;
+    const cardEl = document.createElement('div'); cardEl.className='task-card';
+    cardEl.innerHTML = `
+      <div class="task-head">
+        <div><div class="task-title">${escapeHtml(t.title)}</div>
+        <div class="task-meta">${t.start.replace(/-/g,'/')} 〜 ${t.deadline.replace(/-/g,'/')} ・ 残り${p.daysToDeadline}日 ・ ${cat.label}</div></div>
+        <button class="task-menu-btn" data-delete="${t.id}">✕</button>
+      </div>
+      <div class="pace-badge ${p.status}">${p.message}</div>
+      <div class="progress-wrap">
+        <div class="progress-bar-outer"><div class="progress-bar-inner" style="width:${fillPct}%; background:${cat.color};"></div></div>
+        <div class="progress-text">${p.done}/${p.total}</div>
+      </div>
+      <div class="subtask-list" data-subtasklist="${t.id}"></div>
+      <div class="add-subtask-row">
+        <input type="text" placeholder="サブタスクを追加" data-subinput="${t.id}">
+        <button data-subadd="${t.id}">追加</button>
+      </div>`;
+    list.appendChild(cardEl);
+    const subListEl = cardEl.querySelector(`[data-subtasklist="${t.id}"]`);
+    t.subtasks.forEach(st => {
+      const row = document.createElement('div'); row.className='subtask-row';
+      row.innerHTML = `
+        <div class="subtask-check" style="${st.done?`background:${cat.color};border-color:${cat.color};`:''}" data-toggle="${st.id}">${st.done?'✓':''}</div>
+        <div class="subtask-label ${st.done?'done':''}">${escapeHtml(st.label)}</div>
+        <button class="subtask-del" data-subdel="${st.id}">削除</button>`;
+      subListEl.appendChild(row);
+      row.querySelector('[data-toggle]').onclick = () => { st.done=!st.done; st.doneAt = st.done ? toISO(todayNorm()) : null; l_render(); l_saveTasks(); };
+      row.querySelector('[data-subdel]').onclick = () => { t.subtasks = t.subtasks.filter(x=>x.id!==st.id); l_render(); l_saveTasks(); };
+    });
+    cardEl.querySelector(`[data-subadd="${t.id}"]`).onclick = () => {
+      const input = cardEl.querySelector(`[data-subinput="${t.id}"]`);
+      const label = input.value.trim(); if(!label) return;
+      t.subtasks.push({ id:'st'+Date.now()+Math.random().toString(36).slice(2,6), label, done:false, doneAt:null });
+      input.value=''; l_render(); l_saveTasks();
+    };
+    cardEl.querySelector(`[data-subinput="${t.id}"]`).addEventListener('keydown', e => { if(e.key==='Enter') cardEl.querySelector(`[data-subadd="${t.id}"]`).click(); });
+    cardEl.querySelector('[data-delete]').onclick = () => {
+      if(confirm(`「${t.title}」を削除しますか？サブタスクも全て削除されます。`)){ tasks = tasks.filter(x=>x.id!==t.id); l_render(); l_saveTasks(); }
+    };
+  });
+}
+function l_openTaskSheet(existing, prefill){
+  const isEdit = !!existing;
+  const base = existing || prefill || {title:'', start:toISO(todayNorm()), deadline:toISO(addDays(todayNorm(),30)), category:'work'};
+  const overlay = document.createElement('div'); overlay.className='overlay';
+  overlay.innerHTML = `
+    <div class="sheet">
+      <h2>${isEdit ? 'タスクを編集' : '長期タスクを追加'}</h2>
+      <p class="sheet-sub">締め切りのある大きなタスクを登録します。あとでサブタスクを追加できます。</p>
+      <div class="field"><label>タスク名</label><input type="text" id="fTitle" value="${escapeHtml(base.title)}" placeholder="例）〇〇イベント本番"></div>
+      <div class="row-2">
+        <div class="field"><label>開始日</label><input type="date" id="fStart" value="${base.start}"></div>
+        <div class="field"><label>締切日</label><input type="date" id="fDeadline" value="${base.deadline}"></div>
+      </div>
+      <div class="field"><label>カテゴリー</label><div class="cat-picker" id="catPicker"></div></div>
+      <div class="sheet-actions">
+        <button class="btn ghost" id="cancelBtn">キャンセル</button>
+        <button class="btn primary" id="saveBtn">保存</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  let selectedCat = base.category;
+  const picker = overlay.querySelector('#catPicker');
+  function renderPicker(){
+    picker.innerHTML='';
+    CATEGORIES.forEach(c=>{
+      const opt=document.createElement('div');
+      opt.className='cat-opt'+(c.key===selectedCat?' selected':'');
+      opt.style.background=c.soft; opt.style.color=c.color; opt.textContent=c.label;
+      opt.onclick=()=>{ selectedCat=c.key; renderPicker(); };
+      picker.appendChild(opt);
+    });
+  }
+  renderPicker();
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+  overlay.querySelector('#cancelBtn').onclick=()=>overlay.remove();
+  overlay.querySelector('#saveBtn').onclick = () => {
+    const title = overlay.querySelector('#fTitle').value.trim();
+    const start = overlay.querySelector('#fStart').value;
+    const deadline = overlay.querySelector('#fDeadline').value;
+    if(!title){ alert('タスク名を入力してください'); return; }
+    if(!start||!deadline||start>=deadline){ alert('開始日は締切日より前にしてください'); return; }
+    if(isEdit){ existing.title=title; existing.start=start; existing.deadline=deadline; existing.category=selectedCat; }
+    else{ tasks.push({ id:'t'+Date.now()+Math.random().toString(36).slice(2,6), title, start, deadline, category:selectedCat, subtasks:[] }); }
+    overlay.remove(); l_render(); l_saveTasks();
+  };
+}
+document.getElementById('l_addTaskBtn').onclick = () => l_openTaskSheet(null, null);
+
+/* ========================= INIT ========================= */
+async function init(){
+  await r_load();
+  await d_loadOverrides();
+  await h_loadHabits();
+  await h_loadCompletions();
+  await l_loadTasks();
+
+  r_render();
+  d_render();
+  h_render();
+  l_render();
+
+  showView('daily');
+
+  setTimeout(() => {
+    const gc = document.getElementById('d_gridContainer');
+    const now = new Date();
+    if(isSameDate(now, d_currentDate)){
+      const nowMin = now.getHours()*60+now.getMinutes();
+      const top = ((nowMin-GRID_START_HOUR*60)/60)*ROW_HEIGHT;
+      gc.scrollTop = Math.max(top-150,0);
+    }
+  }, 50);
+}
+init();
+</script>
+</body>
+</html>
